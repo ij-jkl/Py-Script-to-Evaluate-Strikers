@@ -1,22 +1,20 @@
 import pandas as pd
 
-# Read the initial Excel file
+# Be careful using more than 150 players since Excel can't hold that much data correctly, that's why im looking forward to implement DataBases to this code
 file_path = "strikersRawData.xlsx"
 df = pd.read_excel(file_path)
 
-# Select relevant columns
 relevant_columns = [
     "Name", "Position", "Club", "Nat", "Height", "Weight", "Preferred Foot", "Age",
     "Apps", "Starts", "Mins", "Gls", "Shots", "ShT", "Ast", "K Pas", "Ps C", "Transfer Value",
-    "Drb"  # Adding "Dribbles Made"
+    "Drb"  
 ]
 
-# Create an empty list to store processed player data
 processed_players = []
 
-# Iterate over rows in the DataFrame
+# Looping by rows
 for index, row in df.iterrows():
-    # Create a dictionary to store player data
+    # Storing the players Data that we are going to use
     player_data = {
         "Name": row["Name"],
         "Position": row["Position"],
@@ -39,7 +37,7 @@ for index, row in df.iterrows():
         "Dribbles Made": row["Drb"]
     }
 
-    # Calculate derived metrics
+    # I calculate the stats per 90 minutes since the original excel sometimes gives wrong calculations
     player_data["Goals per 90"] = player_data["Goals"] / (player_data["Minutes Played"] / 90)
     player_data["Shots on Target per 90"] = player_data["Shots on Target"] / (player_data["Minutes Played"] / 90)
     player_data["Assists per 90"] = player_data["Assists"] / (player_data["Minutes Played"] / 90)
@@ -49,7 +47,7 @@ for index, row in df.iterrows():
     player_data["Shot Accuracy"] = (player_data["Shots on Target"] / player_data["Shots"]) * 100
     player_data["Goal Involvement per 90"] = (player_data["Goals"] + player_data["Assists"]) / (player_data["Minutes Played"] / 90)
 
-    # Calculate player rating based on metrics
+    # The total score we are going to be giving, you can change the final value depending on the things you are interested.
     player_data["Rating"] = (
         (player_data["Goals per 90"] * 0.2) +
         (player_data["Assists per 90"] * 0.2) +
@@ -59,18 +57,19 @@ for index, row in df.iterrows():
         (player_data["Passes Completed per 90"] * 0.15)
     ) * 10
 
-    # Append player data to the list
+    # Adding the already processed players to the new data
     processed_players.append(player_data)
 
-# Convert the list of dictionaries to a DataFrame
+# Passing the list to a DataFrame
 processed_df = pd.DataFrame(processed_players)
 
-# Normalize the ratings to a scale from 1 to 10
+# We use scaling to obtain a score ranging from 1 to 10.
 min_rating = processed_df["Rating"].min()
 max_rating = processed_df["Rating"].max()
 processed_df["Normalized Rating"] = ((processed_df["Rating"] - min_rating) / (max_rating - min_rating)) * 9 + 1
 
-# Write the updated DataFrame to a new Excel file
+# Converting the DataFrame to the new excel 
+# StrikersRating its going to be the new excel file generated
 output_file_path = "strikersRating.xlsx"
 processed_df.to_excel(output_file_path, index=False)
 
